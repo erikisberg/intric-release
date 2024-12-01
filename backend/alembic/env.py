@@ -1,5 +1,9 @@
 import os
+import sys  # Import sys here for path manipulation
 from logging.config import fileConfig
+
+# Add the `src` directory to the Python path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
 
 from sqlalchemy import engine_from_config, pool
 
@@ -26,7 +30,7 @@ def run_migrations_online() -> None:
     Run migrations in 'online' mode
     """
 
-    # handle testing config for migrations
+    # Handle testing config for migrations
     if os.environ.get("TESTING"):
         print("Running migration for test_database")
         DB_URL = f"{get_settings().sync_database_url}_test"

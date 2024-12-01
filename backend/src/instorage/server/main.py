@@ -18,7 +18,6 @@ if config.get_settings().using_intric_proprietary:
 
 logger = get_logger(__name__)
 
-
 if config.get_settings().using_intric_proprietary:
     allowed_origins = get_allowed_origins()
 else:
@@ -57,8 +56,6 @@ app = get_application()
 @app.exception_handler(500)
 async def custom_http_500_exception_handler(request, exc):
     # CORS Headers are not set on an internal server error. This is confusing, and hard to debug.
-    # Solving this like this response:
-    #   https://github.com/tiangolo/fastapi/issues/775#issuecomment-723628299
     response = JSONResponse(status_code=500, content={"error": "Something went wrong"})
 
     origin = request.headers.get("origin")
@@ -76,8 +73,6 @@ async def custom_http_500_exception_handler(request, exc):
         )
 
         # Logic directly from Starlette's CORSMiddleware:
-        # https://github.com/encode/starlette/blob/master/starlette/middleware/cors.py#L152
-
         response.headers.update(cors.simple_headers)
         has_cookie = "cookie" in request.headers
 
@@ -95,11 +90,19 @@ async def custom_http_500_exception_handler(request, exc):
     return response
 
 
+# Add a root route to serve requests to "/"
+@app.get("/")
+async def root():
+    return {"message": "Welcome to the API!"}
+
+
+# Existing version route with authentication dependency
 @app.get("/version", dependencies=[Depends(auth_dependencies.get_current_active_user)])
 async def get_version():
     return VersionResponse(version=config.get_settings().app_version)
 
 
+# Start the server
 def start():
     uvicorn.run(
         "instorage.server.main:app",
